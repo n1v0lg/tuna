@@ -22,6 +22,6 @@ This will run the sum of squares example protocol.
 
 There are several other example protocols implemented inside index.js.
 
-Disclaimer
+### Disclaimer
 
 Bugs guaranteed. Not secure.
