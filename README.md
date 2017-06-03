@@ -7,12 +7,16 @@ One party is the web server, the other a browser client. Based on the Paillier c
 Installing
 -----------
 
-`npm install
+````
+npm install
+```
 
 Running
 -----------
 
-`node index.js
+```
+node index.js
+```
 
 Open http://localhost:8080/ in browser.
 
