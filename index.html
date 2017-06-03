@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+    <head>
+        
+        <script type="text/javascript" src="./node_modules/jsbn/index.js"></script>
+        <script type="text/javascript" src="./js/paillier.js"></script>
+        <script>
+            var keys = paillier.generateKeys(1024),
+                pk = keys.pub,
+                sk = keys.sec;
+
+            var socket = new WebSocket("ws://localhost:8080");
+            socket.onopen = function (event) {
+                console.log('open');
+                socket.onmessage = function (msg) {
+                    var msg = JSON.parse(msg.data),
+                        type = msg.type,
+                        body = msg.body;
+
+                    if (type === 'pk') {
+                        var n = pk.n.toString();
+                        addMessage('n: ' + n);
+                        var toSend = {
+                            type: 'pk', 
+                            body: {
+                                n: n, 
+                                keySize: 1024
+                            }
+                        };
+                        socket.send(JSON.stringify(toSend));
+                    }
+                    else if (type === 'shares') {
+                        var shares = body;
+                        var a1 = new jsbn.BigInteger(shares.a1),
+                            b1 = new jsbn.BigInteger(shares.b1),
+                            pc = shares.pc;
+                        var b1Plain = sk.decrypt(b1),
+                            a1b1 = pk.mult(a1, b1Plain);
+                        var toSend = {
+                            type: 'share', 
+                            body: {
+                                pc: pc, 
+                                val: a1b1.toString()
+                            }
+                        };
+                        socket.send(JSON.stringify(toSend));
+                    }
+                    else if (type === 'result') {
+                        var shares = body;
+                        var client = sk.decrypt(new jsbn.BigInteger(shares.client)),
+                            server = new jsbn.BigInteger(shares.server);
+                            addMessage('Result: ' + client.add(server).mod(pk.n).toString());   
+                    }
+                    
+                };
+            }
+
+            function addMessage(message) {
+                var text = document.createTextNode(message),
+                    el = document.createElement('li'),
+                    messages = document.getElementById('messages');
+
+                el.appendChild(text);
+                messages.appendChild(el);
+            }
+        </script>
+    </head>
+    <body>
+        <ul id='messages'></ul>
+    </body>
+</html>
